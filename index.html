@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calvin Wijaya</title>
+<meta name="description" content="Research, papers, and the apps and websites I've built.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="main.js" defer></script>
+</head>
+<body>
+
+<header class="nav" id="top">
+  <div class="wrap">
+    <a class="brand" href="#home" data-bind="name">Calvin Wijaya</a>
+    <nav aria-label="Sections">
+      <a href="#home">Home</a>
+      <a href="#research">Research</a>
+      <a href="#projects">Apps &amp; web</a>
+      <a href="#cv">CV</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <button class="icon-btn" id="themeBtn" aria-label="Switch color theme" title="Switch color theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+  <section class="hero" id="home" aria-labelledby="hero-name">
+    <div class="wrap">
+      <div>
+        <h1 id="hero-name" data-bind="name">Calvin Wijaya</h1>
+        <p class="headline" data-bind="headline"></p>
+        <p class="where" id="where"></p>
+        <div class="bio" id="bio"><div class="skeleton" style="width:80%"></div></div>
+        <div class="links" id="profileLinks"></div>
+        <p class="tally" id="tally"></p>
+      </div>
+      <div class="portrait" id="portrait"></div>
+    </div>
+  </section>
+
+  <section class="block" id="research" aria-labelledby="research-h">
+    <div class="wrap">
+      <div class="block-head">
+        <h2 id="research-h">Research &amp; papers</h2>
+        <p>Select a paper to read the abstract and copy the citation.</p>
+      </div>
+      <div class="toolbar">
+        <label class="search"><span class="sr">Search papers</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="paperSearch" type="search" placeholder="Search title, author, keyword">
+        </label>
+        <div class="chips" id="paperChips" role="group" aria-label="Filter by type"></div>
+        <span class="count" id="paperCount" aria-live="polite"></span>
+      </div>
+      <div id="paperList"></div>
+      <nav class="pager" id="paperPager" aria-label="Research pages"></nav>
+    </div>
+  </section>
+
+  <section class="block" id="projects" aria-labelledby="projects-h">
+    <div class="wrap">
+      <div class="block-head">
+        <h2 id="projects-h">Apps &amp; web</h2>
+        <p>Things I've designed and built. Open one for details and links.</p>
+      </div>
+      <div class="toolbar">
+        <div class="chips" id="projectChips" role="group" aria-label="Filter by technology"></div>
+        <span class="count" id="projectCount" aria-live="polite"></span>
+      </div>
+      <div class="grid" id="projectGrid"></div>
+      <nav class="pager" id="projectPager" aria-label="Apps and web pages"></nav>
+    </div>
+  </section>
+
+  <section class="block" id="cv" aria-labelledby="cv-h">
+    <div class="wrap">
+      <div class="block-head">
+        <h2 id="cv-h">Curriculum vitae</h2>
+        <div class="links" id="cvLinks"></div>
+      </div>
+      <div class="cv" id="cvGroups"></div>
+    </div>
+  </section>
+</main>
+
+<footer id="contact">
+  <div class="wrap contact">
+    <h2>Let's work together</h2>
+    <p class="contact-text" id="contactText"></p>
+    <div class="contact-actions" id="contactLinks"></div>
+  </div>
+
+  <!-- Decorative cats, drawn by main.js. Click one to say hello. -->
+  <div class="playground" id="playground" aria-hidden="true"></div>
+
+  <div class="footbar">
+    <div class="wrap">
+      <span id="copyright"></span>
+      <span class="status" id="status"></span>
+    </div>
+  </div>
+</footer>
+
+<dialog id="projectDialog" aria-labelledby="dlgTitle">
+  <div class="dlg-wrap">
+    <button class="icon-btn dlg-close" id="dlgClose" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+    <div id="dlgContent"></div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+</body>
+</html>
