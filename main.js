@@ -971,10 +971,19 @@ const CONFIG = {
 
   // Theme
   const root = document.documentElement;
-  const saved = store.get("theme"); if (saved) root.dataset.theme = saved;
-  $("#themeBtn").addEventListener("click", () => {
-    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
-    root.dataset.theme = dark ? "light" : "dark"; store.set("theme", root.dataset.theme);
+  const themeBtn = $("#themeBtn");
+  const systemDark = matchMedia("(prefers-color-scheme: dark)");
+  function applyTheme(t){
+    root.dataset.theme = t;   // drives the colours and the sun/moon icon
+    const label = t === "dark" ? "Switch to light mode" : "Switch to dark mode";
+    themeBtn.setAttribute("aria-label", label); themeBtn.title = label;
+  }
+  // Use the visitor's saved choice, otherwise follow their device setting
+  applyTheme(store.get("theme") || (systemDark.matches ? "dark" : "light"));
+  systemDark.addEventListener("change", e => { if (!store.get("theme")) applyTheme(e.matches ? "dark" : "light"); });
+  themeBtn.addEventListener("click", () => {
+    const next = root.dataset.theme === "dark" ? "light" : "dark";
+    applyTheme(next); store.set("theme", next);
   });
 
   // Top bar: border on scroll + highlight current section
