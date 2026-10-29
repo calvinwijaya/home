@@ -34,13 +34,13 @@
 <main>
   <section class="hero" id="home" aria-labelledby="hero-name">
     <div class="wrap">
-      <div>
-        <h1 id="hero-name" data-bind="name">Calvin Wijaya</h1>
-        <p class="headline" data-bind="headline"></p>
-        <p class="where" id="where"></p>
-        <div class="bio" id="bio"><div class="skeleton" style="width:80%"></div></div>
-        <div class="links" id="profileLinks"></div>
-        <p class="tally" id="tally"></p>
+      <div class="intro">
+        <h1 id="hero-name" data-bind="name" style="--i:0">Calvin Wijaya</h1>
+        <p class="headline" data-bind="headline" style="--i:1"></p>
+        <p class="where" id="where" style="--i:2"></p>
+        <div class="bio" id="bio" style="--i:3"><div class="skeleton" style="width:80%"></div></div>
+        <div class="links" id="profileLinks" style="--i:4"></div>
+        <p class="tally" id="tally" style="--i:5"></p>
       </div>
       <div class="portrait" id="portrait"></div>
     </div>
@@ -59,6 +59,10 @@
         </label>
         <div class="chips" id="paperChips" role="group" aria-label="Filter by type"></div>
         <span class="count" id="paperCount" aria-live="polite"></span>
+        <button class="btn tint b-analysis" id="analysisBtn" type="button" aria-haspopup="dialog">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+          Publication analysis
+        </button>
       </div>
       <div id="paperList"></div>
       <nav class="pager" id="paperPager" aria-label="Research pages"></nav>
@@ -115,6 +119,54 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
     </button>
     <div id="dlgContent"></div>
+  </div>
+</dialog>
+
+<dialog id="analysisDialog" class="wide" aria-labelledby="anTitle">
+  <div class="dlg-wrap">
+    <button class="icon-btn dlg-close" id="anClose" aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+    </button>
+    <div class="an">
+      <header class="an-head">
+        <h3 id="anTitle">Publication analysis</h3>
+        <p class="sub" id="anSub"></p>
+      </header>
+
+      <div class="an-filter">
+        <span class="an-label" id="anTypesLabel">Include</span>
+        <div class="chips" id="anTypes" role="group" aria-labelledby="anTypesLabel"></div>
+      </div>
+
+      <div class="an-stats" id="anStats"></div>
+
+      <section class="an-card" aria-labelledby="anChartTitle">
+        <div class="an-card-head">
+          <h4 id="anChartTitle">Publications per year</h4>
+          <div class="seg" role="tablist" aria-label="Chart view">
+            <button role="tab" data-view="bars" aria-selected="true">Per year</button>
+            <button role="tab" data-view="line" aria-selected="false">Cumulative</button>
+            <button role="tab" data-view="table" aria-selected="false">Table</button>
+          </div>
+        </div>
+        <div class="chart" id="anChart"></div>
+      </section>
+
+      <section class="an-card" aria-labelledby="anNetTitle">
+        <div class="an-card-head">
+          <h4 id="anNetTitle">Research themes</h4>
+          <p class="hint">Keywords used in the same paper are linked. Bigger circles appear more often. Select one to see its papers.</p>
+        </div>
+        <div class="net-layout">
+          <div class="chart net" id="anNet"></div>
+          <div class="kw-side">
+            <h5>Most used keywords</h5>
+            <ol class="kw-bars" id="anTop"></ol>
+          </div>
+        </div>
+        <div class="kw-papers" id="anPapers" aria-live="polite"></div>
+      </section>
+    </div>
   </div>
 </dialog>
 

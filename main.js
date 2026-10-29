@@ -7,7 +7,7 @@
 const CONFIG = {
   SHEET_ID: "1eEYt7IuF3spKOYuDiFUN-BhNFAz6y0a9SRx_KYYn9oQ",
   TABS: { profile: "Profile", research: "Research", projects: "Projects", experience: "Experience" },
-  PAGE_SIZE: { research: 8, projects: 6, cv: 4 },   // items per page
+  PAGE_SIZE: { research: 8, projects: 6, cv: 6 },   // items per page (CV pages never split a year)
 
   // Badge colours. Any value not listed here gets a colour automatically.
   // Available tones: blue, green, amber, purple, rose, teal, slate
@@ -49,6 +49,7 @@ const CONFIG = {
     orcid:'<circle cx="12" cy="12" r="9"/><path d="M9 8v.01M9 11v6M13 8h1.5a4.5 4.5 0 0 1 0 9H13z"/>',
     researchgate:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 17V8h2.5a2.2 2.2 0 0 1 0 4.4H8M10.5 12.4 13 17M16.5 10.5a2 2 0 1 0 0 4h1v-2"/>',
     instagram:'<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5v.01"/>',
+    scopus:'<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M15.2 8.8a3.6 3.6 0 0 0-3.2-1.6c-1.7 0-3 .9-3 2.3 0 3 6.2 1.5 6.2 4.6 0 1.4-1.4 2.5-3.2 2.5a3.8 3.8 0 0 1-3.3-1.8"/>',
     link:'<path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/>',
     file:'<path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4M9 13h6M9 17h6"/>',
     code:'<path d="m8 8-5 4 5 4M16 8l5 4-5 4"/>',
@@ -65,6 +66,15 @@ const CONFIG = {
     if (!url) return "";
     const m = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=|thumbnail\?id=)([\w-]+)/);
     return m ? `https://lh3.googleusercontent.com/d/${m[1]}` : url;
+  }
+  /* Scopus and ORCID accept either a full link or just the ID */
+  function scopusURL(v){
+    v = String(v || "").trim();
+    return /^\d+$/.test(v) ? `https://www.scopus.com/authid/detail.uri?authorId=${v}` : v;
+  }
+  function orcidURL(v){
+    v = String(v || "").trim();
+    return /^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/i.test(v) ? `https://orcid.org/${v}` : v;
   }
   const initialsOf = s => String(s || "?").split(/\s+/).map(w => w[0]).filter(Boolean).slice(0,2).join("").toUpperCase();
 
@@ -117,17 +127,21 @@ const CONFIG = {
       bio:"This is sample text. Everything on this page comes from your Google Sheet.\nAdd a row to the Research or Projects tab and it appears here the next time the page loads.",
       photo:"", email:"calvin.wijaya@ugm.ac.id", cv_link:"#",
       github:"https://github.com/", linkedin:"https://www.linkedin.com/", google_scholar:"https://scholar.google.com/",
-      orcid:"https://orcid.org/", researchgate:"https://www.researchgate.net/", instagram:"https://www.instagram.com/", website:""
+      orcid:"https://orcid.org/", researchgate:"https://www.researchgate.net/", instagram:"https://www.instagram.com/", website:"",
+      scopus:"57000000000"
     },
-    research: Array.from({length:11}, (_,i) => {
-      const types = ["Journal","Conference","Preprint","Thesis","Ongoing research"];
+    research: Array.from({length:14}, (_,i) => {
+      const types = ["Journal","Conference","Conference","Journal","Thesis","Ongoing research"];
       const t = types[i % types.length];
+      const themes = ["digital twin, point cloud, photogrammetry","3D city model, digital twin, GIS","deep learning, point cloud, LiDAR",
+        "photogrammetry, smartphone, 3D measurement","remote sensing, deep learning","digital twin, photorealistic rendering, forest",
+        "LiDAR, forest, point cloud"];
       return {
         title:`Sample ${t.toLowerCase()} entry number ${i+1}`, authors: i%2 ? "A. Coauthor, C. Wijaya" : "C. Wijaya, B. Supervisor",
         venue: t==="Ongoing research" ? "In progress" : "Journal or conference name", year:String(2026 - Math.floor(i/3)),
         type:t, status: t==="Ongoing research" ? "In progress" : (i===1 ? "Under review" : ""),
         link:"#", pdf: i%3===0 ? "#" : "", doi: i===0 ? "10.0000/example.2026.001" : "",
-        abstract:"Abstracts appear when a visitor opens a paper.", keywords:"keyword one, keyword two"
+        abstract:"Abstracts appear when a visitor opens a paper.", keywords:themes[i % themes.length]
       };
     }),
     projects: Array.from({length:8}, (_,i) => {
@@ -137,8 +151,11 @@ const CONFIG = {
         image:"", live_link:"#", code_link: i%2 ? "" : "#", year:String(2026 - Math.floor(i/3)) };
     }),
     experience:[
+      {section:"Experience", title:"Researcher | Sample project one", organization:"Universitas Gadjah Mada", start:"2026"},
+      {section:"Experience", title:"Researcher | Sample project two", organization:"Universitas Gadjah Mada", start:"2026"},
       {section:"Experience", title:"Research assistant", organization:"Sample lab", start:"2025", end:"Present", location:"Yogyakarta", description:"What you did, in a sentence or two."},
       {section:"Experience", title:"Software engineering intern", organization:"Sample company", start:"2024", end:"2024", location:"Jakarta"},
+      {section:"Experience", title:"Researcher | Sample project three", organization:"Partner institution", start:"2024"},
       {section:"Experience", title:"Teaching assistant", organization:"Sample department", start:"2023", end:"2024"},
       {section:"Experience", title:"Freelance developer", organization:"Self-employed", start:"2022", end:"2023"},
       {section:"Experience", title:"Student researcher", organization:"Sample lab", start:"2021", end:"2022"},
@@ -157,15 +174,17 @@ const CONFIG = {
     return out;
   }
   function renderPager(el, totalItems, size, page, key){
-    const pages = Math.ceil(totalItems / size);
-    if (pages <= 1){ el.innerHTML = ""; return; }
     const from = (page-1)*size + 1, to = Math.min(page*size, totalItems);
+    pagerHTML(el, Math.ceil(totalItems / size), page, key, `${from}–${to} of ${totalItems}`);
+  }
+  function pagerHTML(el, pages, page, key, info){
+    if (pages <= 1){ el.innerHTML = ""; return; }
     el.innerHTML = `
       <button data-key="${key}" data-page="${page-1}" ${page===1?"disabled":""} aria-label="Previous page">${icon("prev")}</button>
       ${pageList(page, pages).map(n => n==="…" ? `<span class="gap">…</span>` :
         `<button data-key="${key}" data-page="${n}" ${n===page?'aria-current="page"':""} aria-label="Page ${n}">${n}</button>`).join("")}
       <button data-key="${key}" data-page="${page+1}" ${page===pages?"disabled":""} aria-label="Next page">${icon("next")}</button>
-      <span class="info">${from}–${to} of ${totalItems}</span>`;
+      <span class="info">${info}</span>`;
   }
   const slice = (arr, page, size) => arr.slice((page-1)*size, page*size);
 
@@ -202,7 +221,8 @@ const CONFIG = {
       p.email && `<a class="btn solid b-email" href="mailto:${esc(p.email)}">${icon("email")}Email me</a>`,
       btn(p.cv_link, "Download CV", "file", "tint b-cv"),
       btn(p.google_scholar, "Google Scholar", "scholar", "tint b-scholar"),
-      btn(p.orcid, "ORCID", "orcid", "tint b-orcid"),
+      btn(scopusURL(p.scopus), "Scopus", "scopus", "tint b-scopus"),
+      btn(orcidURL(p.orcid), "ORCID", "orcid", "tint b-orcid"),
       btn(p.researchgate, "ResearchGate", "researchgate", "tint b-researchgate"),
       btn(p.github, "GitHub", "github", "tint b-github"),
       btn(p.linkedin, "LinkedIn", "linkedin", "tint b-linkedin"),
@@ -473,25 +493,53 @@ const CONFIG = {
     $("#projectDialog").showModal();
   }
 
+  /* CV: entries with the same dates share one heading, e.g. "2026" */
+  const whenLabel = e => {
+    const s = String(e.start || "").trim(), en = String(e.end || "").trim();
+    return !en || en === s ? s : [s, en].filter(Boolean).join(" – ");
+  };
+  // Split year-groups into pages of about `size` entries without splitting a year
+  function chunkGroups(groups, size){
+    const pages = []; let cur = [], n = 0;
+    groups.forEach(g => {
+      if (n && n + g.items.length > size){ pages.push(cur); cur = []; n = 0; }
+      cur.push(g); n += g.items.length;
+    });
+    if (cur.length) pages.push(cur);
+    return pages;
+  }
+
   function renderCV(){
-    const groups = new Map();
-    DATA.experience.forEach(e => { const s = e.section || "Experience"; if (!groups.has(s)) groups.set(s, []); groups.get(s).push(e); });
+    const sections = new Map();
+    DATA.experience.forEach(e => { const s = e.section || "Experience"; if (!sections.has(s)) sections.set(s, []); sections.get(s).push(e); });
     const size = CONFIG.PAGE_SIZE.cv;
-    $("#cvGroups").innerHTML = groups.size ? [...groups].map(([s, items], gi) => {
-      const pages = Math.ceil(items.length/size);
-      const page = state.cvPages[s] = Math.min(state.cvPages[s] || 1, pages);
+    const pagers = [];
+
+    $("#cvGroups").innerHTML = sections.size ? [...sections].map(([s, items], gi) => {
+      const byWhen = new Map();
+      items.forEach(e => { const w = whenLabel(e); if (!byWhen.has(w)) byWhen.set(w, []); byWhen.get(w).push(e); });
+      const groups = [...byWhen].map(([when, items]) => ({when, items}));
+      const pages = chunkGroups(groups, size);
+      const page = state.cvPages[s] = Math.min(state.cvPages[s] || 1, pages.length);
+      const before = pages.slice(0, page-1).flat().reduce((a,g) => a + g.items.length, 0);
+      const shown = pages[page-1].reduce((a,g) => a + g.items.length, 0);
+      pagers.push([gi, pages.length, page, s, `${before+1}–${before+shown} of ${items.length}`]);
+
       return `
-      <div class="cv-group" data-group="${esc(s)}"><h3>${esc(s)}</h3><ol class="timeline">${slice(items, page, size).map(e => `
+      <div class="cv-group" data-group="${esc(s)}"><h3>${esc(s)}</h3><ol class="timeline">${pages[page-1].map(g => `
         <li>
-          <span class="when">${esc([e.start, e.end].filter(Boolean).join(" – "))}</span>
-          <h4>${esc(e.title)}</h4>
-          <p class="org">${esc([e.organization, e.location].filter(Boolean).join(", "))}</p>
-          ${e.description ? `<p class="d">${esc(e.description)}</p>` : ""}
+          ${g.when ? `<span class="when">${esc(g.when)}</span>` : ""}
+          ${g.items.map(e => `
+          <div class="entry">
+            <h4>${esc(e.title)}</h4>
+            <p class="org">${esc([e.organization, e.location].filter(Boolean).join(", "))}</p>
+            ${e.description ? `<p class="d">${esc(e.description)}</p>` : ""}
+          </div>`).join("")}
         </li>`).join("")}</ol>
         <nav class="pager" id="cvPager${gi}" aria-label="${esc(s)} pages"></nav></div>`;
     }).join("")
       : `<p class="empty">Add rows to the Experience tab to build your CV.</p>`;
-    [...groups].forEach(([s, items], gi) => renderPager($("#cvPager"+gi), items.length, size, state.cvPages[s], "cv:"+s));
+    pagers.forEach(([gi, pages, page, s, info]) => pagerHTML($("#cvPager"+gi), pages, page, "cv:"+s, info));
   }
 
   function renderAll(){
@@ -500,12 +548,389 @@ const CONFIG = {
     renderResearchChips(); renderResearch();
     renderProjectChips(); renderProjects();
     renderCV();
+    // start the hero entrance once real content is in place (only runs once)
+    requestAnimationFrame(() => $(".hero").classList.add("ready"));
   }
 
   function toast(msg){
     const t = $("#toast"); t.textContent = msg; t.classList.add("show");
     clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1800);
   }
+
+  /* ---------- Publication analysis ---------- */
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const AN = { on:null, view:"bars", sel:null, hover:null };
+  const MAX_SERIES = 7;   // more types than this share one grey "Other types" colour
+
+  // Series = paper types, ordered by how often they occur, so each type keeps its colour
+  function seriesInfo(){
+    const counts = {};
+    DATA.research.forEach(r => { const t = r.type || "Other"; counts[t] = (counts[t]||0) + 1; });
+    const ordered = Object.keys(counts).sort((a,b) => counts[b]-counts[a] || a.localeCompare(b));
+    const names = ordered.slice(0, MAX_SERIES);
+    if (ordered.length > MAX_SERIES) names.push("Other types");
+    const of = t => { const i = ordered.indexOf(t || "Other"); return i < MAX_SERIES ? ordered[i] : "Other types"; };
+    const color = Object.fromEntries(names.map((n,i) => [n, n === "Other types" ? "var(--v-other)" : `var(--v${i+1})`]));
+    const count = n => DATA.research.filter(r => of(r.type) === n).length;
+    return { names, of, color, count };
+  }
+
+  const yearOf = r => { const m = String(r.year || "").match(/\d{4}/); return m ? +m[0] : null; };
+
+  function selectedPapers(S){ return DATA.research.filter(r => AN.on.has(S.of(r.type))); }
+
+  function keywordGraph(papers){
+    const nodes = new Map(), edges = new Map();
+    papers.forEach((r, pi) => {
+      const kws = [...new Map(list(r.keywords).map(k => [k.toLowerCase(), k])).entries()];
+      kws.forEach(([k, label]) => {
+        if (!nodes.has(k)) nodes.set(k, {k, label, n:0, papers:[]});
+        const nd = nodes.get(k); nd.n++; nd.papers.push(r);
+      });
+      for (let i = 0; i < kws.length; i++) for (let j = i+1; j < kws.length; j++){
+        const key = [kws[i][0], kws[j][0]].sort().join("|");
+        edges.set(key, (edges.get(key) || 0) + 1);
+      }
+    });
+    return { nodes:[...nodes.values()].sort((a,b) => b.n - a.n || a.label.localeCompare(b.label)), edges };
+  }
+
+  function coauthors(papers){
+    const me = (DATA.profile.name || "").trim().split(/\s+/).pop()?.toLowerCase();
+    const set = new Set();
+    papers.forEach(r => String(r.authors || "").split(/,|;|\band\b|&/).map(a => a.trim()).filter(Boolean)
+      .forEach(a => { if (!me || !a.toLowerCase().includes(me)) set.add(a.toLowerCase().replace(/\s+/g," ")); }));
+    return set.size;
+  }
+
+  function openAnalysis(){
+    const S = seriesInfo();
+    if (!AN.on){
+      AN.on = new Set(S.names.filter(n => !/ongoing/i.test(n)));
+      if (!AN.on.size) AN.on = new Set(S.names);
+    }
+    AN.sel = null;
+    $("#analysisDialog").showModal();
+    renderAnalysis();
+  }
+
+  function renderAnalysis(){
+    const S = seriesInfo();
+    const papers = selectedPapers(S);
+    const dated = papers.filter(r => yearOf(r));
+    const undated = papers.length - dated.length;
+    $("#anSub").textContent = `Built from ${papers.length} of the ${DATA.research.length} entries in your Research tab.` +
+      (undated ? ` ${undated} without a year ${undated > 1 ? "are" : "is"} left out of the chart.` : "");
+
+    $("#anTypes").innerHTML = S.names.map(n => `
+      <button class="chip ${AN.on.has(n) ? "" : "off"}" style="--sc:${S.color[n]}" aria-pressed="${AN.on.has(n)}" data-series="${esc(n)}">
+        <span class="sw"></span>${esc(n)}<span class="n">${S.count(n)}</span></button>`).join("");
+
+    // headline numbers
+    const years = dated.map(yearOf);
+    const perYear = {}; years.forEach(y => perYear[y] = (perYear[y]||0) + 1);
+    const busiest = Object.entries(perYear).sort((a,b) => b[1]-a[1] || b[0]-a[0])[0];
+    const G = keywordGraph(papers);
+    const top = G.nodes[0];
+    const co = coauthors(papers);
+    const stat = (v, label, cls="") => `<div class="stat"><b class="${cls}">${v}</b><span>${label}</span></div>`;
+    $("#anStats").innerHTML = papers.length ? [
+      stat(papers.length, papers.length === 1 ? "item" : "items"),
+      years.length ? stat(Math.min(...years) === Math.max(...years) ? Math.min(...years) : `${Math.min(...years)}–${Math.max(...years)}`, "years active") : "",
+      busiest ? stat(busiest[0], `busiest year, ${busiest[1]} item${busiest[1] > 1 ? "s" : ""}`) : "",
+      top ? stat(esc(top.label), `top keyword, in ${top.n} item${top.n > 1 ? "s" : ""}`, "word") : "",
+      co ? stat(co, "co-authors") : ""
+    ].join("") : "";
+
+    document.querySelectorAll("#analysisDialog .seg button").forEach(b => b.setAttribute("aria-selected", b.dataset.view === AN.view));
+    drawYearChart(S, dated);
+    drawNetwork(G);
+    renderKwPapers(G);
+  }
+
+  function niceScale(max){
+    if (max <= 5) return { top:Math.max(max,1), step:1 };
+    const raw = max / 4, mag = 10 ** Math.floor(Math.log10(raw));
+    const step = [1,2,5,10].map(m => m*mag).find(s => s >= raw);
+    return { top:Math.ceil(max/step)*step, step };
+  }
+
+  function el(tag, attrs = {}, parent){
+    const n = document.createElementNS(SVGNS, tag);
+    for (const [k,v] of Object.entries(attrs)) n.setAttribute(k, v);
+    if (parent) parent.append(n);
+    return n;
+  }
+
+  function showTip(box, x, y, html){
+    let t = box.querySelector(".tip");
+    if (!t){ t = document.createElement("div"); t.className = "tip"; box.append(t); }
+    t.innerHTML = html;
+    const w = box.clientWidth, tw = t.offsetWidth;
+    t.style.left = Math.min(Math.max(x, tw/2 + 4), w - tw/2 - 4) + "px";
+    // not enough room above the point: show the tooltip below it instead
+    const below = y - t.offsetHeight - 10 < -16;
+    t.style.translate = below ? "-50% 12px" : "";
+    t.style.top = y + "px";
+  }
+  const hideTip = box => box.querySelector(".tip")?.remove();
+
+  function drawYearChart(S, dated){
+    const box = $("#anChart");
+    box.innerHTML = "";
+    if (!AN.on.size){ box.innerHTML = `<p class="empty">Choose at least one type above.</p>`; return; }
+    if (!dated.length){ box.innerHTML = `<p class="empty">Add a year to your papers in the Research tab to see them over time.</p>`; return; }
+
+    const ys = dated.map(yearOf), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    const years = Array.from({length:y1-y0+1}, (_,i) => y0+i);
+    const series = S.names.filter(n => AN.on.has(n));
+    const grid = years.map(y => {
+      const row = {year:y, total:0};
+      series.forEach(n => row[n] = 0);
+      dated.forEach(r => { if (yearOf(r) === y){ row[S.of(r.type)]++; row.total++; } });
+      return row;
+    });
+
+    if (AN.view === "table"){
+      box.innerHTML = `<div class="table-scroll"><table class="an-table">
+        <thead><tr><th scope="col">Year</th>${series.map(n => `<th scope="col">${esc(n)}</th>`).join("")}<th scope="col">Total</th></tr></thead>
+        <tbody>${grid.slice().reverse().map(r => `<tr><td>${r.year}</td>${series.map(n => `<td>${r[n] || "–"}</td>`).join("")}<td><b>${r.total}</b></td></tr>`).join("")}</tbody>
+        <tfoot><tr><td>All years</td>${series.map(n => `<td>${grid.reduce((a,r) => a + r[n], 0)}</td>`).join("")}<td>${dated.length}</td></tr></tfoot>
+      </table></div>`;
+      return;
+    }
+
+    const W = Math.max(300, box.clientWidth || 600), H = W < 520 ? 230 : 270;
+    const m = {l:34, r:12, t:24, b:28};
+    const iw = W - m.l - m.r, ih = H - m.t - m.b;
+    const band = iw / years.length;
+    const xc = i => m.l + band*i + band/2;
+    const svg = el("svg", {viewBox:`0 0 ${W} ${H}`, role:"img",
+      "aria-label": AN.view === "line" ? "Cumulative publications over time" : "Publications per year by type"}, box);
+
+    let values = grid.map(r => r.total);
+    if (AN.view === "line"){ let c = 0; values = grid.map(r => (c += r.total)); }
+    const {top, step} = niceScale(Math.max(...values));
+    const yv = v => m.t + ih - (v/top)*ih;
+
+    const g = el("g", {class:"grid"}, svg), ax = el("g", {class:"axis"}, svg);
+    for (let v = 0; v <= top; v += step){
+      el("line", {x1:m.l, x2:W-m.r, y1:yv(v), y2:yv(v), "stroke-width":1, "stroke-dasharray": v ? "2 4" : ""}, g);
+      el("text", {x:m.l-8, y:yv(v)+4, "text-anchor":"end"}, ax).textContent = v;
+    }
+    const every = Math.ceil(years.length / Math.max(1, Math.floor(iw / 44)));
+    years.forEach((y,i) => { if (i % every === 0 || i === years.length-1)
+      el("text", {x:xc(i), y:H-8, "text-anchor":"middle"}, ax).textContent = y; });
+
+    if (AN.view === "bars"){
+      const bw = Math.min(44, band*0.62);
+      const cols = grid.map((r,i) => {
+        const col = el("g", {class:"col"}, svg);
+        let base = yv(0);
+        const parts = series.filter(n => r[n]);
+        parts.forEach((n, pi) => {
+          const h = (r[n]/top)*ih, topY = base - h, isTop = pi === parts.length-1;
+          const gap = isTop ? 0 : 2, x = xc(i) - bw/2, hh = Math.max(0, h - gap), y = topY + gap;
+          const rad = isTop ? Math.min(4, hh, bw/2) : 0;
+          el("path", {class:"seg-r", style:`fill:${S.color[n]}`,
+            d:`M${x},${y+hh} V${y+rad} Q${x},${y} ${x+rad},${y} H${x+bw-rad} Q${x+bw},${y} ${x+bw},${y+rad} V${y+hh} Z`}, col);
+          base = topY;
+        });
+        if (r.total) el("text", {class:"total", x:xc(i), y:yv(r.total)-6, "text-anchor":"middle"}, col).textContent = r.total;
+        const hit = el("rect", {class:"hit", x:m.l + band*i, y:m.t, width:band, height:ih, tabindex:0}, col);
+        const show = () => {
+          cols.forEach(c => c.classList.toggle("dim", c !== col));
+          showTip(box, xc(i), yv(r.total) - 4, `<strong>${r.year}</strong>` +
+            (r.total ? parts.slice().reverse().map(n => `<div class="row"><i style="background:${S.color[n]}"></i>${esc(n)}<em>${r[n]}</em></div>`).join("") +
+              (parts.length > 1 ? `<div class="row">Total<em>${r.total}</em></div>` : "") : "No items"));
+        };
+        const hide = () => { cols.forEach(c => c.classList.remove("dim")); hideTip(box); };
+        hit.addEventListener("mouseenter", show); hit.addEventListener("focus", show);
+        hit.addEventListener("mouseleave", hide); hit.addEventListener("blur", hide);
+        return col;
+      });
+    } else {
+      const pts = values.map((v,i) => [xc(i), yv(v)]);
+      el("path", {d:"M" + pts.map(p => p.join(",")).join(" L"), fill:"none", style:"stroke:var(--v1)", "stroke-width":2, "stroke-linejoin":"round"}, svg);
+      const cross = el("line", {y1:m.t, y2:m.t+ih, style:"stroke:var(--muted)", "stroke-width":1, "stroke-dasharray":"3 3", opacity:0}, svg);
+      const dots = pts.map(([x,y]) => el("circle", {cx:x, cy:y, r:4, style:"fill:var(--v1); stroke:var(--surface)", "stroke-width":2}, svg));
+      const last = pts.length - 1;
+      el("text", {class:"total", x:pts[last][0], y:pts[last][1]-12, "text-anchor":"middle"}, svg).textContent = values[last];
+      grid.forEach((r,i) => {
+        const hit = el("rect", {class:"hit", x:m.l + band*i, y:m.t, width:band, height:ih, tabindex:0}, svg);
+        const show = () => {
+          cross.setAttribute("x1", pts[i][0]); cross.setAttribute("x2", pts[i][0]); cross.setAttribute("opacity", 1);
+          dots.forEach((d,j) => d.setAttribute("r", j === i ? 6 : 4));
+          showTip(box, pts[i][0], pts[i][1] - 6, `<strong>By the end of ${r.year}</strong>${values[i]} in total<br><span style="color:var(--muted)">${r.total} added that year</span>`);
+        };
+        const hide = () => { cross.setAttribute("opacity", 0); dots.forEach(d => d.setAttribute("r", 4)); hideTip(box); };
+        hit.addEventListener("mouseenter", show); hit.addEventListener("focus", show);
+        hit.addEventListener("mouseleave", hide); hit.addEventListener("blur", hide);
+      });
+    }
+  }
+
+  /* Force-directed layout, deterministic so it looks the same on every visit */
+  function layoutNetwork(nodes, links, W, H){
+    const n = nodes.length, k = Math.sqrt((W*H)/Math.max(n,1)) * 0.55;
+    nodes.forEach((d,i) => { const a = i*2.39996, rr = 14*Math.sqrt(i+1); d.x = W/2 + Math.cos(a)*rr*1.6; d.y = H/2 + Math.sin(a)*rr; });
+    for (let it = 0; it < 360; it++){
+      const temp = (W/9) * (1 - it/360) + 0.5;
+      nodes.forEach(d => { d.dx = 0; d.dy = 0; });
+      for (let i = 0; i < n; i++) for (let j = i+1; j < n; j++){
+        const a = nodes[i], b = nodes[j];
+        let dx = a.x-b.x, dy = a.y-b.y, d = Math.hypot(dx,dy) || .01;
+        const f = (k*k)/d;
+        a.dx += dx/d*f; a.dy += dy/d*f; b.dx -= dx/d*f; b.dy -= dy/d*f;
+      }
+      links.forEach(l => {
+        const a = l.a, b = l.b;
+        let dx = a.x-b.x, dy = a.y-b.y, d = Math.hypot(dx,dy) || .01;
+        const f = (d*d)/k * (0.6 + Math.log2(1 + l.w)*0.5);
+        a.dx -= dx/d*f; a.dy -= dy/d*f; b.dx += dx/d*f; b.dy += dy/d*f;
+      });
+      nodes.forEach(d => {
+        d.dx += (W/2 - d.x) * 0.9; d.dy += (H/2 - d.y) * 1.6;   // keep the cloud wide rather than tall
+        const len = Math.hypot(d.dx, d.dy) || 1;
+        d.x += d.dx/len * Math.min(len, temp); d.y += d.dy/len * Math.min(len, temp);
+      });
+    }
+    // stretch to fill the box, then push overlapping circles and labels apart
+    const pad = 10, xs = nodes.map(d => d.x), ys = nodes.map(d => d.y);
+    const [minX, maxX, minY, maxY] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+    nodes.forEach(d => {
+      d.hw = Math.max(d.r, d.tw/2) + 5;
+      d.x = maxX > minX ? pad + d.hw + (d.x-minX)/(maxX-minX) * (W - 2*(pad + d.hw)) : W/2;
+      d.y = maxY > minY ? pad + d.r + (d.y-minY)/(maxY-minY) * (H - 2*pad - d.r - 20) : H/2;
+    });
+    const box = d => [d.x - d.hw, d.x + d.hw, d.y - d.r - 3, d.y + d.r + 18];
+    for (let it = 0; it < 120; it++){
+      let moved = false;
+      for (let i = 0; i < n; i++) for (let j = i+1; j < n; j++){
+        const a = nodes[i], b = nodes[j], A = box(a), B = box(b);
+        const ox = Math.min(A[1], B[1]) - Math.max(A[0], B[0]), oy = Math.min(A[3], B[3]) - Math.max(A[2], B[2]);
+        if (ox > 0 && oy > 0){
+          moved = true;
+          if (ox < oy){ const s = (a.x < b.x ? -1 : 1) * ox/2; a.x += s; b.x -= s; }
+          else { const s = (a.y < b.y ? -1 : 1) * oy/2; a.y += s; b.y -= s; }
+        }
+      }
+      nodes.forEach(d => { d.x = Math.min(Math.max(d.x, d.hw + 2), W - d.hw - 2); d.y = Math.min(Math.max(d.y, d.r + 4), H - d.r - 20); });
+      if (!moved) break;
+    }
+  }
+
+  function drawNetwork(G){
+    const box = $("#anNet"), side = $("#anTop");
+    box.innerHTML = ""; box.classList.remove("focus");
+    if (!G.nodes.length){
+      box.innerHTML = `<p class="empty">Add keywords to the Research tab (column L), separated by commas, to see your research themes.</p>`;
+      side.innerHTML = ""; return;
+    }
+    const W = Math.max(280, box.clientWidth || 600), H = W < 520 ? 320 : 360;
+    const cap = W < 520 ? 16 : 26;
+    const nodes = G.nodes.slice(0, cap).map(d => ({...d}));
+    const byK = new Map(nodes.map(d => [d.k, d]));
+    const maxN = nodes[0].n;
+    nodes.forEach(d => { d.r = 6 + 16*Math.sqrt(d.n/maxN); d.tw = d.label.length*6.3 + 6; d.nb = new Map(); });
+    const links = [];
+    G.edges.forEach((w, key) => {
+      const [a, b] = key.split("|");
+      if (byK.has(a) && byK.has(b)){
+        links.push({a:byK.get(a), b:byK.get(b), w});
+        byK.get(a).nb.set(b, w); byK.get(b).nb.set(a, w);
+      }
+    });
+    layoutNetwork(nodes, links, W, H);
+    const maxW = Math.max(1, ...links.map(l => l.w));
+
+    const svg = el("svg", {viewBox:`0 0 ${W} ${H}`, role:"img", "aria-label":"Network of keywords that appear together"}, box);
+    const lg = el("g", {}, svg), ng = el("g", {}, svg);
+    const lineEls = links.map(l => ({l, e: el("line", {class:"edge", x1:l.a.x, y1:l.a.y, x2:l.b.x, y2:l.b.y,
+      "stroke-width": 1 + 3.5*(l.w-1)/Math.max(1, maxW-1), opacity: .22 + .4*(l.w/maxW)}, lg)}));
+    const nodeEls = nodes.map(d => {
+      const g = el("g", {class:"node", tabindex:0, role:"button", "aria-label":`${d.label}, ${d.n} items`, "data-k":d.k}, ng);
+      el("circle", {cx:d.x, cy:d.y, r:d.r}, g);
+      el("text", {x:d.x, y:d.y + d.r + 13}, g).textContent = d.label;
+      return {d, g};
+    });
+
+    const focus = k => {
+      box.classList.toggle("focus", !!k);
+      const d = k && byK.get(k);
+      nodeEls.forEach(({d:x, g}) => { g.classList.toggle("on", !!d && (x === d || d.nb.has(x.k))); g.classList.toggle("sel", x.k === AN.sel); });
+      lineEls.forEach(({l, e}) => e.classList.toggle("on", !!d && (l.a === d || l.b === d)));
+    };
+    const tipFor = d => {
+      const often = [...d.nb].sort((a,b) => b[1]-a[1]).slice(0,3).map(([k]) => esc(byK.get(k).label));
+      showTip(box, d.x, d.y - d.r - 4, `<strong>${esc(d.label)}</strong>${d.n} item${d.n > 1 ? "s" : ""}` +
+        (often.length ? `<br><span style="color:var(--muted)">Often with ${often.join(", ")}</span>` : ""));
+    };
+    nodeEls.forEach(({d, g}) => {
+      g.addEventListener("mouseenter", () => { focus(d.k); tipFor(d); });
+      g.addEventListener("mouseleave", () => { focus(AN.sel); hideTip(box); });
+      g.addEventListener("focus", () => { focus(d.k); tipFor(d); });
+      g.addEventListener("blur", () => { focus(AN.sel); hideTip(box); });
+      const pick = () => { selectKeyword(AN.sel === d.k ? null : d.k, G); };
+      g.addEventListener("click", pick);
+      g.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); pick(); } });
+    });
+    svg.addEventListener("click", e => { if (!e.target.closest(".node") && AN.sel) selectKeyword(null, G); });
+    box._focus = focus;
+    focus(AN.sel);
+
+    const top = G.nodes.slice(0, 8);
+    side.innerHTML = top.map(d => `<li><button data-k="${esc(d.k)}" aria-pressed="${AN.sel === d.k}">
+      <span class="name">${esc(d.label)}</span><span class="n">${d.n}</span>
+      <span class="bar" style="width:${Math.max(6, d.n/top[0].n*100)}%"></span></button></li>`).join("");
+    side.onclick = e => { const b = e.target.closest("[data-k]"); if (b) selectKeyword(AN.sel === b.dataset.k ? null : b.dataset.k, G); };
+  }
+
+  function selectKeyword(k, G){
+    AN.sel = k;
+    $("#anNet")._focus?.(k);
+    document.querySelectorAll("#anTop [data-k]").forEach(b => b.setAttribute("aria-pressed", b.dataset.k === k));
+    renderKwPapers(G);
+  }
+
+  function renderKwPapers(G){
+    const box = $("#anPapers");
+    const d = AN.sel && G.nodes.find(n => n.k === AN.sel);
+    if (!d){ box.innerHTML = ""; return; }
+    const items = d.papers.slice().sort((a,b) => (yearOf(b)||0) - (yearOf(a)||0));
+    box.innerHTML = `
+      <div class="head"><p>${items.length} item${items.length > 1 ? "s" : ""} with “${esc(d.label)}”</p>
+        <button class="btn tint b-analysis" id="anShow" type="button">Show them in the list</button></div>
+      <ul>${items.slice(0, 8).map(r => `<li>${esc(r.title)} <span>(${esc(r.year || "undated")})</span></li>`).join("")}</ul>
+      ${items.length > 8 ? `<p class="hint" style="margin:6px 0 0">and ${items.length - 8} more</p>` : ""}`;
+    $("#anShow").onclick = () => {
+      state.q = d.label; state.type = "All"; state.researchPage = 1;
+      $("#paperSearch").value = d.label;
+      renderResearchChips(); renderResearch();
+      $("#analysisDialog").close();
+      $("#research").scrollIntoView();
+    };
+  }
+
+  $("#analysisBtn").addEventListener("click", openAnalysis);
+  $("#anClose").addEventListener("click", () => $("#analysisDialog").close());
+  $("#analysisDialog").addEventListener("click", e => { if (e.target.id === "analysisDialog") e.target.close(); });
+  $("#anTypes").addEventListener("click", e => {
+    const b = e.target.closest("[data-series]"); if (!b) return;
+    const n = b.dataset.series;
+    AN.on.has(n) ? AN.on.delete(n) : AN.on.add(n);
+    renderAnalysis();
+  });
+  document.querySelector("#analysisDialog .seg").addEventListener("click", e => {
+    const b = e.target.closest("[data-view]"); if (!b) return;
+    AN.view = b.dataset.view; renderAnalysis();
+  });
+  // Redraw when the window is resized while the analysis is open
+  let anW = 0;
+  new ResizeObserver(() => {
+    const w = $("#anChart").clientWidth;
+    if ($("#analysisDialog").open && Math.abs(w - anW) > 4){ anW = w; renderAnalysis(); }
+  }).observe($("#anChart"));
 
   /* ---------- Events ---------- */
   $("#paperChips").addEventListener("click", e => {
@@ -573,6 +998,7 @@ const CONFIG = {
 
   async function boot(){
     drawCats();
+    setTimeout(() => $(".hero").classList.add("ready"), 2500);   // never leave the hero hidden on a slow connection
     const status = $("#status");
     const showUpdated = () => {
       const when = formatUpdated(DATA.profile.last_updated);
