@@ -619,8 +619,7 @@ const CONFIG = {
     const papers = selectedPapers(S);
     const dated = papers.filter(r => yearOf(r));
     const undated = papers.length - dated.length;
-    $("#anSub").textContent = `Built from ${papers.length} of the ${DATA.research.length} entries in your Research tab.` +
-      (undated ? ` ${undated} without a year ${undated > 1 ? "are" : "is"} left out of the chart.` : "");
+    $("#anSub").textContent = "How my publications have grown over the years, and the research themes that connect them.";
 
     $("#anTypes").innerHTML = S.names.map(n => `
       <button class="chip ${AN.on.has(n) ? "" : "off"}" style="--sc:${S.color[n]}" aria-pressed="${AN.on.has(n)}" data-series="${esc(n)}">
@@ -824,7 +823,7 @@ const CONFIG = {
     const box = $("#anNet"), side = $("#anTop");
     box.innerHTML = ""; box.classList.remove("focus");
     if (!G.nodes.length){
-      box.innerHTML = `<p class="empty">Add keywords to the Research tab (column L), separated by commas, to see your research themes.</p>`;
+      box.innerHTML = `<p class="empty">No research themes to show for this selection.</p>`;
       side.innerHTML = ""; return;
     }
     const W = Math.max(280, box.clientWidth || 600), H = W < 520 ? 320 : 360;
