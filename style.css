@@ -111,8 +111,86 @@ img{max-width:100%; display:block}
 .portrait .initials{position:absolute; inset:0; display:grid; place-items:center; font:400 4.5rem/1 var(--serif); color:var(--accent)}
 @media (max-width:720px){
   .hero .wrap{grid-template-columns:1fr}
-  .portrait{--rot:-1.5deg; order:-1; width:min(220px, 60vw)}
+  .stage{order:-1}
+  .portrait{--rot:-1.5deg; width:min(220px, 60vw)}
 }
+
+/* Photo stands in front of a small isometric city */
+.hero{position:relative; overflow:clip}
+.hero .intro{position:relative; z-index:2}
+/* the photo stands on the back of the city block; % margins scale with the photo width */
+.stage{position:relative; z-index:1; margin-bottom:62%}
+.stage .portrait{z-index:1}
+.city{position:absolute; z-index:0; width:165%; left:-30%; top:0; margin-top:26%; pointer-events:none}
+.city svg{display:block; width:100%; height:auto; overflow:visible}
+.city .bld, .city .tree{pointer-events:auto}
+@media (max-width:720px){ .stage{justify-self:center; margin-bottom:60%} .city{left:-32.5%} }
+
+/* city colours: light walls, cobalt LOD2 roofs, green trees */
+:root{
+  --c-ground:#E3EAF5; --c-plate-l:#C9D4E6; --c-plate-r:#B4C1D7; --c-road:#D2DBEA; --c-road-line:#FFFFFF;
+  --c-wall-l:#FFFFFF; --c-wall-r:#E0E7F2; --c-roof-a:#7495E6; --c-roof-b:#5174D0; --c-roof-c:#3C5DB8;
+  --c-flat:#CBD6EC; --c-floor:rgba(42,82,190,.16); --c-win:#A9BEEB; --c-edge:rgba(21,32,51,.14);
+  --c-tree:#6BBF8E; --c-tree-d:#4FA374; --c-trunk:#9B8A72; --c-hi:#F2A93B;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --c-ground:#1B2434; --c-plate-l:#141B27; --c-plate-r:#0F151E; --c-road:#232D3F; --c-road-line:#3A4760;
+    --c-wall-l:#2C3649; --c-wall-r:#222B3B; --c-roof-a:#7290F0; --c-roof-b:#5472D8; --c-roof-c:#4059B8;
+    --c-flat:#36435E; --c-floor:rgba(136,166,255,.14); --c-win:#F2C76B; --c-edge:rgba(0,0,0,.35);
+    --c-tree:#3F9B69; --c-tree-d:#2F7F54; --c-trunk:#6B5D4C; --c-hi:#F2B45C;
+  }
+}
+:root[data-theme="dark"]{
+  --c-ground:#1B2434; --c-plate-l:#141B27; --c-plate-r:#0F151E; --c-road:#232D3F; --c-road-line:#3A4760;
+  --c-wall-l:#2C3649; --c-wall-r:#222B3B; --c-roof-a:#7290F0; --c-roof-b:#5472D8; --c-roof-c:#4059B8;
+  --c-flat:#36435E; --c-floor:rgba(136,166,255,.14); --c-win:#F2C76B; --c-edge:rgba(0,0,0,.35);
+  --c-tree:#3F9B69; --c-tree-d:#2F7F54; --c-trunk:#6B5D4C; --c-hi:#F2B45C;
+}
+.city path{stroke:var(--c-edge); stroke-width:.6; stroke-linejoin:round}
+.city .ground{fill:var(--c-ground)} .city .plate-l{fill:var(--c-plate-l)} .city .plate-r{fill:var(--c-plate-r)}
+.city .road{fill:var(--c-road); stroke:none} .city .road-line{fill:none; stroke:var(--c-road-line); stroke-width:1; stroke-dasharray:4 4}
+.city .wall-l{fill:var(--c-wall-l)} .city .wall-r{fill:var(--c-wall-r)}
+.city .roof-a{fill:var(--c-roof-a)} .city .roof-b{fill:var(--c-roof-b)} .city .roof-c{fill:var(--c-roof-c)}
+.city .roof-flat{fill:var(--c-flat)}
+.city .floor{fill:none; stroke:var(--c-floor); stroke-width:.8}
+.city .win{fill:var(--c-win); stroke:none}
+.city .crown{fill:var(--c-tree); stroke:var(--c-tree-d); stroke-width:.8}
+.city .trunk{stroke:var(--c-trunk); stroke-width:1.6; stroke-linecap:round}
+.city .bld{cursor:default; transition:filter .2s ease}
+.city .bld:hover .roof-a, .city .bld:hover .roof-b, .city .bld:hover .roof-c, .city .bld:hover .roof-flat{fill:var(--c-hi)}
+.city .sel{fill:none; stroke:var(--c-hi); stroke-width:1.2; stroke-dasharray:3 3; pointer-events:none; transition:all .25s ease}
+.city-tag{position:absolute; z-index:3; translate:-50% 0; pointer-events:none; white-space:nowrap; background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:999px; padding:3px 10px; font:600 .72rem/1.4 var(--sans); box-shadow:0 6px 14px -8px rgba(0,0,0,.35); transition:left .25s ease, top .25s ease, opacity .25s ease}
+.city-tag b{color:var(--c-roof-c); font-weight:700}
+:root[data-theme="dark"] .city-tag b{color:var(--c-roof-a)}
+
+/* city builds itself after the photo lands */
+.city .plate, .city .bld, .city .tree, .city .sel, .city-tag{opacity:0}
+.hero.ready .city .plate{animation:fade .6s ease .55s both}
+.hero.ready .city .bld{transform-box:fill-box; transform-origin:50% 100%; animation:grow .7s cubic-bezier(.25,.8,.3,1.2) both; animation-delay:calc(.75s + var(--d) * 70ms)}
+.hero.ready .city .tree{transform-box:fill-box; transform-origin:50% 100%; animation:pop .5s cubic-bezier(.3,.8,.3,1.4) both; animation-delay:calc(1.1s + var(--d) * 50ms)}
+.hero.ready .city .sel, .hero.ready .city-tag{animation:fade .4s ease 2.1s both}
+@keyframes fade{from{opacity:0} to{opacity:1}}
+@keyframes grow{from{opacity:0; transform:scaleY(0)} to{opacity:1; transform:none}}
+@keyframes pop{from{opacity:0; transform:scale(0)} to{opacity:1; transform:none}}
+@media (prefers-reduced-motion: reduce){ .city .plate, .city .bld, .city .tree, .city .sel, .city-tag{opacity:1} }
+
+/* ============ Contour lines (decorative) ============ */
+.topo{position:absolute; z-index:0; pointer-events:none; opacity:.16; color:var(--accent);
+  -webkit-mask-image:radial-gradient(closest-side, #000 45%, transparent 100%); mask-image:radial-gradient(closest-side, #000 45%, transparent 100%)}
+:root[data-theme="dark"] .topo{opacity:.2}
+.topo svg{display:block; width:100%; height:100%}
+.topo path{fill:none; stroke:currentColor; stroke-linecap:round}
+.topo .ix{stroke-width:1.5}
+.topo .ln{stroke-width:.9}
+.topo .dt{stroke-width:1.7; stroke-dasharray:0 5.5}
+section.block, footer{position:relative; overflow:clip}
+section.block > .wrap, .hero > .wrap, footer > .wrap, footer > .playground, footer > .footbar{position:relative; z-index:1}
+.topo-hero{width:720px; height:600px; left:-260px; top:-170px}
+.topo-research{width:640px; height:560px; right:-250px; top:-60px}
+.topo-cv{width:620px; height:540px; left:-280px; bottom:-200px}
+.topo-contact{width:600px; height:520px; right:-220px; top:-120px}
+@media (max-width:720px){ .topo{transform:scale(.7)} .topo-hero{left:-330px; top:-230px} }
 
 /* Entrance: text rises in line by line, the photo slides in and settles.
    main.js adds .ready to the hero once the content is in place. */
@@ -227,7 +305,9 @@ dialog[open]{animation:pop .22s ease}
 @keyframes pop{from{opacity:0; transform:translateY(8px) scale(.98)}}
 .dlg-wrap{position:relative}
 .dlg-img{aspect-ratio:16/9; background:var(--accent-soft)}
-.dlg-img img{width:100%; height:100%; object-fit:cover}
+.dlg-img img, .dlg-img video{width:100%; height:100%; object-fit:cover; display:block; background:#000}
+.thumb video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:1}
+.thumb video:not([poster]):not(.on){opacity:0}
 .dlg-body{padding:24px clamp(18px,4vw,32px) 28px}
 .dlg-body h3{font:400 2rem/1.1 var(--serif); margin:0 0 8px}
 .dlg-body .sub{color:var(--muted); margin:0 0 16px; font-size:.95rem; display:flex; align-items:center; gap:8px}

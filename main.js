@@ -247,6 +247,161 @@ const CONFIG = {
     return isNaN(d) ? v : d.toLocaleDateString("en-GB", {day:"numeric", month:"long", year:"numeric"});
   }
 
+  /* ---------- Isometric 3D city (behind the photo) ----------
+     Each building: [x, y, width, depth, height, roof, roofHeight, lod]
+     roof: flat | gable-x | gable-y | hip | pyramid    lod: 1, 2 or 3   */
+  const CITY = {
+    size: 12,
+    roads: [[0, 5.4, 12, 1.2], [5.4, 0, 1.2, 12]],          // x, y, w, d
+    buildings: [
+      // right block (beside the photo)
+      [9.8,0.4,2,2,9,"flat",0,2],   [9.8,3,1.8,2,5,"flat",0,1],   [7,0.6,2.2,1.5,2.2,"gable-x",1.1,2],   [7,2.8,2.2,1.8,2.6,"hip",1,2],
+      // left block
+      [0.4,9.8,2,2,7.5,"flat",0,2],  [3,9.8,2,1.8,3.6,"flat",0,3], [0.6,7,1.5,2.2,2.2,"gable-y",1.2,2],   [3.1,7,1.8,1.8,3,"pyramid",1.6,2],
+      // front block (below the photo)
+      [7,7,3,2,3,"hip",1.4,2],       [10.4,7,1.4,2.2,2.2,"gable-y",1,2], [7,9.8,2.2,1.4,2,"gable-x",1,2], [9.8,9.8,1.8,1.8,4,"flat",0,2]
+    ],
+    // the back block sits behind the photo, so it's a park
+    trees: [[1,1],[2.4,1.3],[3.9,1],[1.3,2.7],[2.9,2.9],[4.3,3.4],[1,4.4],[3.3,4.6],[9.6,5],[7.6,11.7],[9.1,11.7],[5,11.8],[11.7,6.8]],
+    selected: null   // building number to pre-select, e.g. 8; null = select only on hover
+  };
+  const ROOF_NAME = {flat:"flat roof", "gable-x":"gable roof", "gable-y":"gable roof", hip:"hip roof", pyramid:"pyramid roof"};
+
+  function drawCity(){
+    const box = $("#city"); if (!box) return;
+    const C = 0.866, S = 0.5, U = 10;
+    const P = (x,y,z) => [(x - y) * C * U, ((x + y) * S - z) * U];
+    const pts = a => a.map(p => P(...p).map(n => n.toFixed(1)).join(",")).join(" L");
+    const face = (a, cls) => `<path class="${cls}" d="M${pts(a)} Z"/>`;
+    const N = CITY.size;
+
+    // ground plate with a little thickness
+    let svg = `<g class="plate">
+      ${face([[N,0,0],[N,N,0],[N,N,-.7],[N,0,-.7]], "plate-r")}
+      ${face([[0,N,0],[N,N,0],[N,N,-.7],[0,N,-.7]], "plate-l")}
+      ${face([[0,0,0],[N,0,0],[N,N,0],[0,N,0]], "ground")}
+      ${CITY.roads.map(([x,y,w,d]) => face([[x,y,0],[x+w,y,0],[x+w,y+d,0],[x,y+d,0]], "road")).join("")}
+      ${CITY.roads.map(([x,y,w,d]) => `<path class="road-line" d="M${w > d ? pts([[x,y+d/2,0],[x+w,y+d/2,0]]) : pts([[x+w/2,y,0],[x+w/2,y+d,0]])}"/>`).join("")}
+    </g>`;
+
+    function building([x0,y0,w,d,h,roof,rh,lod]){
+      const x1 = x0+w, y1 = y0+d, xm = x0+w/2, ym = y0+d/2, t = h + rh;
+      let s = face([[x1,y0,0],[x1,y1,0],[x1,y1,h],[x1,y0,h]], "wall-r")
+            + face([[x0,y1,0],[x1,y1,0],[x1,y1,h],[x0,y1,h]], "wall-l");
+      if (h > 4){   // floor lines on taller buildings
+        for (let z = 1.6; z < h - .4; z += 1.6)
+          s += `<path class="floor" d="M${pts([[x0,y1,z],[x1,y1,z],[x1,y0,z]])}"/>`;
+      }
+      if (lod === 3){   // LOD3: windows and a door
+        for (let z = .7; z < h - .6; z += 1.1) for (let k = 0; k < 3; k++){
+          const a = x0 + .25 + k*(w-.5)/3, b = a + (w-.5)/3 - .25;
+          s += face([[a,y1,z],[b,y1,z],[b,y1,z+.55],[a,y1,z+.55]], "win");
+        }
+      }
+      if (roof === "flat"){
+        s += face([[x0,y0,h],[x1,y0,h],[x1,y1,h],[x0,y1,h]], "roof-flat");
+        if (h > 6) s += face([[x0+.6,y0+.6,h],[x0+1.3,y0+.6,h],[x0+1.3,y0+1.2,h],[x0+.6,y0+1.2,h]], "wall-r")
+                     + face([[x0+1.3,y0+.6,h],[x0+1.3,y0+1.2,h],[x0+1.3,y0+1.2,h+.5],[x0+1.3,y0+.6,h+.5]], "wall-r")
+                     + face([[x0+.6,y0+1.2,h],[x0+1.3,y0+1.2,h],[x0+1.3,y0+1.2,h+.5],[x0+.6,y0+1.2,h+.5]], "wall-l")
+                     + face([[x0+.6,y0+.6,h+.5],[x0+1.3,y0+.6,h+.5],[x0+1.3,y0+1.2,h+.5],[x0+.6,y0+1.2,h+.5]], "roof-flat");
+      } else if (roof === "gable-x"){
+        s += face([[x0,y0,h],[x1,y0,h],[x1,ym,t],[x0,ym,t]], "roof-b")
+           + face([[x0,ym,t],[x1,ym,t],[x1,y1,h],[x0,y1,h]], "roof-a")
+           + face([[x1,y0,h],[x1,y1,h],[x1,ym,t]], "wall-r");
+      } else if (roof === "gable-y"){
+        s += face([[x0,y0,h],[xm,y0,t],[xm,y1,t],[x0,y1,h]], "roof-b")
+           + face([[xm,y0,t],[x1,y0,h],[x1,y1,h],[xm,y1,t]], "roof-c")
+           + face([[x0,y1,h],[x1,y1,h],[xm,y1,t]], "wall-l");
+      } else if (roof === "hip"){
+        const i = Math.min(w, d) / 2;
+        s += face([[x0,y0,h],[x1,y0,h],[x1-i,ym,t],[x0+i,ym,t]], "roof-b")
+           + face([[x0,y0,h],[x0+i,ym,t],[x0,y1,h]], "roof-b")
+           + face([[x0,y1,h],[x0+i,ym,t],[x1-i,ym,t],[x1,y1,h]], "roof-a")
+           + face([[x1,y0,h],[x1,y1,h],[x1-i,ym,t]], "roof-c");
+      } else if (roof === "pyramid"){
+        s += face([[x0,y0,h],[x1,y0,h],[xm,ym,t]], "roof-b") + face([[x0,y0,h],[xm,ym,t],[x0,y1,h]], "roof-b")
+           + face([[x0,y1,h],[xm,ym,t],[x1,y1,h]], "roof-a") + face([[x1,y0,h],[x1,y1,h],[xm,ym,t]], "roof-c");
+      }
+      return s;
+    }
+
+    // draw back to front so nearer objects cover farther ones
+    const items = [
+      ...CITY.buildings.map((b, i) => ({kind:"b", b, i, depth: b[0]+b[2] + b[1]+b[3]})),
+      ...CITY.trees.map(([x,y], i) => ({kind:"t", x, y, i, depth: x + y + .5}))
+    ].sort((a, b) => a.depth - b.depth);
+    let order = 0;
+    svg += items.map(it => {
+      if (it.kind === "b") return `<g class="bld" data-i="${it.i}" style="--d:${order++}">${building(it.b)}</g>`;
+      const [tx, ty] = P(it.x, it.y, 0), [cx, cy] = P(it.x, it.y, 1.7);
+      return `<g class="tree" style="--d:${it.i}"><path class="trunk" d="M${tx.toFixed(1)},${ty.toFixed(1)} L${cx.toFixed(1)},${(cy+3).toFixed(1)}"/>
+        <ellipse class="crown" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" rx="7" ry="6.4"/></g>`;
+    }).join("");
+
+    // viewBox from the projected corners of the plate and the tallest roof
+    const tall = Math.max(...CITY.buildings.map(b => b[4] + b[6])) + 1;
+    const xs = [P(0,N,0)[0], P(N,0,0)[0]], top = P(0,0,tall)[1], bottom = P(N,N,-.7)[1];
+    box.innerHTML = `<svg viewBox="${(xs[0]-8).toFixed(0)} ${top.toFixed(0)} ${(xs[1]-xs[0]+16).toFixed(0)} ${(bottom-top+6).toFixed(0)}" aria-hidden="true">${svg}<rect class="sel"/></svg>`;
+
+    // selection box + tag, like picking an object in a CityJSON viewer
+    const svgEl = box.querySelector("svg"), sel = svgEl.querySelector(".sel");
+    const tag = document.createElement("div"); tag.className = "city-tag"; box.append(tag);
+    function pick(i){
+      const g = i == null ? null : svgEl.querySelector(`.bld[data-i="${i}"]`);
+      sel.style.visibility = tag.style.visibility = g ? "" : "hidden";   // nothing selected: hide box and label
+      if (!g) return;
+      const bb = g.getBBox(), b = CITY.buildings[i];
+      Object.entries({x:bb.x-3, y:bb.y-3, width:bb.width+6, height:bb.height+6, rx:3}).forEach(([k,v]) => sel.setAttribute(k, v));
+      tag.innerHTML = `<b>LOD${b[7]}</b> ${ROOF_NAME[b[5]]}, ${Math.round((b[4] + b[6]) * 3)} m`;
+      const vb = svgEl.viewBox.baseVal, sc = svgEl.clientWidth / vb.width;
+      tag.style.left = ((bb.x + bb.width/2 - vb.x) * sc) + "px";
+      tag.style.top = ((bb.y + bb.height - vb.y) * sc + 10) + "px";   // below the building, clear of the photo
+    }
+    requestAnimationFrame(() => pick(CITY.selected));
+    svgEl.addEventListener("mouseover", e => { const g = e.target.closest(".bld"); if (g) pick(+g.dataset.i); });
+    svgEl.addEventListener("mouseleave", () => pick(CITY.selected));
+    addEventListener("resize", () => pick(CITY.selected), {passive:true});
+  }
+
+  /* ---------- Contour lines ----------
+     Topographic rings around a peak: every 4th line is a solid index contour,
+     the others alternate between thin solid and dotted. */
+  function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function contourSVG(seed, w = 600, h = 520, rings = 13){
+    const r = rng(seed), cx = w * (.42 + r()*.16), cy = h * (.42 + r()*.16);
+    const harm = [2,3,4,5,7].map(k => ({k, a:(.03 + r()*.07) / Math.sqrt(k-1), p:r()*Math.PI*2}));
+    const sx = 1.1 + r()*.35, tilt = r()*Math.PI;
+    let R = 14 + r()*10, out = "";
+    for (let i = 0; i < rings; i++){
+      R += 14 + r()*10;
+      const g = .45 + .9 * i/rings;    // outer rings get wobblier
+      const P = [];
+      for (let j = 0; j < 72; j++){
+        const th = j / 72 * Math.PI * 2;
+        let rr = R * (1 + harm.reduce((s, H) => s + H.a * g * Math.sin(H.k*th + H.p + i*.06), 0));
+        const ex = Math.cos(th) * rr * sx, ey = Math.sin(th) * rr;
+        P.push([cx + ex*Math.cos(tilt) - ey*Math.sin(tilt), cy + ex*Math.sin(tilt) + ey*Math.cos(tilt)]);
+      }
+      // closed Catmull-Rom -> cubic Bézier
+      let d = `M${P[0][0].toFixed(1)},${P[0][1].toFixed(1)}`;
+      for (let j = 0; j < P.length; j++){
+        const p0 = P[(j-1+P.length)%P.length], p1 = P[j], p2 = P[(j+1)%P.length], p3 = P[(j+2)%P.length];
+        d += `C${(p1[0]+(p2[0]-p0[0])/6).toFixed(1)},${(p1[1]+(p2[1]-p0[1])/6).toFixed(1)} ${(p2[0]-(p3[0]-p1[0])/6).toFixed(1)},${(p2[1]-(p3[1]-p1[1])/6).toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+      }
+      out += `<path class="${i % 4 === 3 ? "ix" : i % 2 ? "dt" : "ln"}" d="${d}"/>`;
+    }
+    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice">${out}</svg>`;
+  }
+  function drawContours(){
+    [["#home","topo-hero",7],["#research","topo-research",23],["#cv","topo-cv",51],["#contact","topo-contact",88]].forEach(([sel, cls, seed]) => {
+      const host = $(sel); if (!host || host.querySelector("."+cls)) return;
+      const d = document.createElement("div");
+      d.className = "topo " + cls; d.setAttribute("aria-hidden", "true");
+      d.innerHTML = contourSVG(seed);
+      host.prepend(d);
+    });
+  }
+
   /* ---------- Cats ---------- */
   const fill = c => `style="fill:${c}"`;
   const whiskers = (x, y, dir) => `<path d="M${x} ${y} l${14*dir} -3 M${x} ${y+2.5} l${14*dir} 1.5" style="stroke:var(--whisker)" stroke-width="1" stroke-linecap="round" fill="none"/>`;
@@ -405,7 +560,7 @@ const CONFIG = {
     if (!rows.length){
       $("#paperList").innerHTML = DATA.research.length
         ? `<p class="empty">No papers match "${esc(state.q)}". Try another word or choose All.</p>`
-        : `<p class="empty">No papers yet. Add a row to the Research tab of your sheet.</p>`;
+        : `<p class="empty">Publications will be listed here soon.</p>`;
       return;
     }
     const groups = new Map();
@@ -450,12 +605,45 @@ const CONFIG = {
     }).join("") : "";
   }
 
+  /* Video: a direct .mp4/.webm link (best: a file in your GitHub repo, e.g. media/my-app.mp4).
+     Google Drive links are tried, but Drive often refuses to stream video. */
+  function videoURL(url){
+    url = String(url || "").trim();
+    const m = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([\w-]+)/);
+    return m ? `https://drive.google.com/uc?export=download&id=${m[1]}` : url;
+  }
+  const QUIET = matchMedia("(prefers-reduced-motion: reduce)").matches || navigator.connection?.saveData === true;
+
   function thumb(p){
-    const src = img(p.image);
+    const src = img(p.image), vid = videoURL(p.video);
     const mono = esc(initialsOf(p.name));
+    // The video only starts downloading when its card is on screen (see watchVideos)
+    if (vid) return `<video muted loop playsinline preload="none" ${src ? `poster="${esc(src)}"` : ""} data-src="${esc(vid)}"></video>${src ? "" : `<span class="mono">${mono}</span>`}`;
     return src
       ? `<img src="${esc(src)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML='<span class=&quot;mono&quot;>${mono}</span>'">`
       : `<span class="mono">${mono}</span>`;
+  }
+
+  // Play videos only while their card is visible; pause them when scrolled away
+  let videoWatcher;
+  function watchVideos(){
+    videoWatcher?.disconnect();
+    const vids = document.querySelectorAll("#projectGrid video");
+    if (!vids.length) return;
+    const load = v => { if (!v.src){ v.src = v.dataset.src; v.addEventListener("playing", () => v.classList.add("on"), {once:true}); } };
+    if (QUIET){   // reduced motion or data saver: play only on hover
+      vids.forEach(v => {
+        const card = v.closest(".project");
+        card.addEventListener("mouseenter", () => { load(v); v.play().catch(() => {}); });
+        card.addEventListener("mouseleave", () => v.pause());
+      });
+      return;
+    }
+    videoWatcher = new IntersectionObserver(es => es.forEach(en => {
+      const v = en.target;
+      if (en.isIntersecting){ load(v); v.play().catch(() => {}); } else v.pause();
+    }), {threshold:.4});
+    vids.forEach(v => videoWatcher.observe(v));
   }
 
   function renderProjects(){
@@ -475,14 +663,19 @@ const CONFIG = {
           <div class="foot">${badge(p.kind)}${list(p.tech).slice(0,4).map(t=>`<span class="tech">${esc(t)}</span>`).join("")}</div>
         </div>
       </button>`).join("")
-      : `<p class="empty">No apps or websites yet. Add a row to the Projects tab of your sheet.</p>`;
+      : `<p class="empty">Apps and websites will be listed here soon.</p>`;
+    watchVideos();
   }
 
   function openProject(i){
     const p = DATA.projects[i];
-    const src = img(p.image);
+    const src = img(p.image), vid = videoURL(p.video);
+    const media = vid
+      ? `<div class="dlg-img"><video src="${esc(vid)}" ${src ? `poster="${esc(src)}"` : ""} muted loop playsinline controls ${QUIET ? "" : "autoplay"} aria-label="Screen recording of ${esc(p.name)}"></video></div>`
+      : src ? `<div class="dlg-img"><img src="${esc(src)}" alt="Screenshot of ${esc(p.name)}" referrerpolicy="no-referrer"></div>` : "";
+    document.querySelectorAll("#projectGrid video").forEach(v => v.pause());
     $("#dlgContent").innerHTML = `
-      ${src ? `<div class="dlg-img"><img src="${esc(src)}" alt="Screenshot of ${esc(p.name)}" referrerpolicy="no-referrer"></div>` : ""}
+      ${media}
       <div class="dlg-body">
         <h3 id="dlgTitle">${esc(p.name)}</h3>
         <p class="sub">${badge(p.kind)}${esc(p.year || "")}</p>
@@ -538,7 +731,7 @@ const CONFIG = {
         </li>`).join("")}</ol>
         <nav class="pager" id="cvPager${gi}" aria-label="${esc(s)} pages"></nav></div>`;
     }).join("")
-      : `<p class="empty">Add rows to the Experience tab to build your CV.</p>`;
+      : `<p class="empty">CV details will be added soon.</p>`;
     pagers.forEach(([gi, pages, page, s, info]) => pagerHTML($("#cvPager"+gi), pages, page, "cv:"+s, info));
   }
 
@@ -678,7 +871,7 @@ const CONFIG = {
     const box = $("#anChart");
     box.innerHTML = "";
     if (!AN.on.size){ box.innerHTML = `<p class="empty">Choose at least one type above.</p>`; return; }
-    if (!dated.length){ box.innerHTML = `<p class="empty">Add a year to your papers in the Research tab to see them over time.</p>`; return; }
+    if (!dated.length){ box.innerHTML = `<p class="empty">No dated publications to chart for this selection.</p>`; return; }
 
     const ys = dated.map(yearOf), y0 = Math.min(...ys), y1 = Math.max(...ys);
     const years = Array.from({length:y1-y0+1}, (_,i) => y0+i);
@@ -954,6 +1147,7 @@ const CONFIG = {
   });
   $("#projectGrid").addEventListener("click", e => { const b = e.target.closest("[data-p]"); if (b) openProject(+b.dataset.p); });
   $("#dlgClose").addEventListener("click", () => $("#projectDialog").close());
+  $("#projectDialog").addEventListener("close", () => { $("#dlgContent").innerHTML = ""; watchVideos(); });
   $("#projectDialog").addEventListener("click", e => { if (e.target.id === "projectDialog") e.target.close(); });
 
   // All pagers share one handler
@@ -1005,7 +1199,7 @@ const CONFIG = {
   });
 
   async function boot(){
-    drawCats();
+    drawCats(); drawCity(); drawContours();
     setTimeout(() => $(".hero").classList.add("ready"), 2500);   // never leave the hero hidden on a slow connection
     const status = $("#status");
     const showUpdated = () => {
